@@ -14,7 +14,6 @@ class User(db.Model, UserMixin):
     senha = db.Column(db.String(length=60), nullable=False, unique=True)
     valor = db.Column(db.Integer, nullable=False, default=5000)
     itens = db.relationship('Item', backref='dono_user', lazy=True)
-<<<<<<< HEAD
     
     @property
     def formataValor(self):
@@ -22,8 +21,6 @@ class User(db.Model, UserMixin):
             return f"R${str(self.valor)[:-3]},{str(self.valor)[-3:]}"
         else:
             return f"R${self.valor}"
-=======
->>>>>>> 02fe0c1c08c5b50f466a5ee0f57be555cb5cebce
 
     @property
     def senha_hash(self):
