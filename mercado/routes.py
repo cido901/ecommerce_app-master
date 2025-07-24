@@ -1,9 +1,9 @@
 from mercado import app
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from mercado.models import Item, User
-from mercado.forms import CadastroForm, LoginForm
+from mercado.forms import CadastroForm, LoginForm, CompraProdutoForm, VendaProdutoForm
 from mercado import db
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 
 @app.route('/')
 def page_home():
@@ -11,12 +11,24 @@ def page_home():
     return render_template("home.html")
 
 
-@app.route('/produtos')
+@app.route('/produtos', methods=['GET', 'POST'])
 @login_required
 def page_produtos():
-    itens = Item.query.all()
-     # Renderiza o template com o formulário        
-    return render_template("produtos.html", itens=itens)
+    compra_form = CompraProdutoForm()
+    if request.method == 'POST':
+        compra_produto = request.form.get('compra_produto')
+        produto_obj = Item.query.filter_by(nome=compra_produto).first()
+        if produto_obj:
+            if current_user.compra_disponivel(produto_obj):
+                produto_obj.compra(current_user)
+                flash(f'Produto {produto_obj.nome} comprado com sucesso!', category='success')
+            else:
+                flash(f'Saldo insuficiente para comprar este produto {produto_obj.nome}.', category="danger")
+        return redirect(url_for('page_produtos'))
+    if request.method == 'GET':
+        itens = Item.query.filter_by(dono=None)
+        dono_itens = Item.query.filter_by(dono=current_user.id)
+        return render_template("produtos.html", itens=itens, compra_form=compra_form, dono_itens=dono_itens)
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def page_cadastro():
