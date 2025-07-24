@@ -15,7 +15,9 @@ def page_home():
 @login_required
 def page_produtos():
     compra_form = CompraProdutoForm()
+    venda_form = VendaProdutoForm()
     if request.method == 'POST':
+        # Processa a compra de um produto
         compra_produto = request.form.get('compra_produto')
         produto_obj = Item.query.filter_by(nome=compra_produto).first()
         if produto_obj:
@@ -24,11 +26,20 @@ def page_produtos():
                 flash(f'Produto {produto_obj.nome} comprado com sucesso!', category='success')
             else:
                 flash(f'Saldo insuficiente para comprar este produto {produto_obj.nome}.', category="danger")
+    # Processa a venda de um produto
+        venda_produto = request.form.get('venda_produto')
+        produto_obj_venda = Item.query.filter_by(nome=venda_produto).first()
+        if produto_obj_venda:
+            if current_user.venda_disponivel(produto_obj_venda):
+                produto_obj_venda.vender(current_user)
+                flash(f'Produto {produto_obj_venda.nome} vendido com sucesso!', category='success')
+            else:
+                flash(f'Você não é o dono deste produto {produto_obj_venda.nome}.', category="danger")
         return redirect(url_for('page_produtos'))
     if request.method == 'GET':
         itens = Item.query.filter_by(dono=None)
         dono_itens = Item.query.filter_by(dono=current_user.id)
-        return render_template("produtos.html", itens=itens, compra_form=compra_form, dono_itens=dono_itens)
+        return render_template("produtos.html", itens=itens, compra_form=compra_form, dono_itens=dono_itens, venda_form=venda_form)
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def page_cadastro():

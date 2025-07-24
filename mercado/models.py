@@ -36,6 +36,9 @@ class User(db.Model, UserMixin):
     def compra_disponivel(self, produto_obj):
         return self.valor >= produto_obj.preco 
 
+    def venda_disponivel(self, produto_obj):
+        return produto_obj in self.itens
+
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(length=30), nullable=False, unique=True)
@@ -51,3 +54,11 @@ class Item(db.Model):
          self.dono = usuario.id
          usuario.valor -= self.preco
          db.session.commit()
+
+    def vender(self, usuario):
+        if self.dono == usuario.id:
+            self.dono = None
+            usuario.valor += self.preco
+            db.session.commit()
+        else:
+            raise ValueError("Você não é o dono deste produto.")
